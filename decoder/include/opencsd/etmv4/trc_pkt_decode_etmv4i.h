@@ -85,6 +85,9 @@ protected:
     // process an exception element - output instruction trace + exception generic type.
     ocsd_err_t processException(); 
 
+    // process Q element
+    ocsd_err_t processQElement();
+
     // process an element that cannot be cancelled / discarded
     ocsd_err_t processTS_CC_EventElem(TrcStackElem *pElem); 
 
@@ -208,7 +211,6 @@ private:
 
     ocsd_instr_info m_instr_info;  //!< instruction info for code follower - in address is the next to be decoded.
 
-    ocsd_pe_context m_pe_context;  //!< current context information
     etmv4_trace_info_t m_trace_info; //!< trace info for this trace run.
 
     bool m_prev_overflow;
