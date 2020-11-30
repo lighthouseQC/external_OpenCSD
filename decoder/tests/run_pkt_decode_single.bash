@@ -1,6 +1,7 @@
-########################################################
-# Copyright 2019 ARM Limited. All rights reserved.
-# 
+#!/bin/bash
+#################################################################################
+# Copyright 2018 ARM. All rights reserved.
+#
 # Redistribution and use in source and binary forms, with or without modification, 
 # are permitted provided that the following conditions are met:
 # 
@@ -27,64 +28,49 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 # 
 #################################################################################
-
-########
-# RCTDL - test makefile for snapshot lister test.
+# OpenCSD library: run single test
+#
+#
+#################################################################################
+# Usage options:-
+# * default: run test on binary + libs in ./bin/linux64/rel
+# run_pkt_decode_tests.bash <test>
+#
+# * use installed opencsd libraries & program
+# run_pkt_decode_tests.bash use-installed <test>
+#
 #
 
-CXX := $(MASTER_CXX)
-LINKER := $(MASTER_LINKER)	
+OUT_DIR=./results
+SNAPSHOT_DIR=./snapshots
+BIN_DIR=./bin/linux64/rel/
 
-PROG = mem-buffer-eg
+TEST="a57_single_step"
 
-BUILD_DIR=./$(PLAT_DIR)
+mkdir -p ${OUT_DIR}
 
-VPATH	=	 $(OCSD_TESTS)/source 
+if [ "$1" == "use-installed" ]; then
+    BIN_DIR=""
+    shift
+fi
 
-CXX_INCLUDES	=	\
-			-I$(OCSD_TESTS)/source \
-			-I$(OCSD_INCLUDE) \
-			-I$(OCSD_TESTS)/snapshot_parser_lib/include
+if [ "$1" != "" ]; then
+    TEST=$1
+fi
 
-OBJECTS		=	$(BUILD_DIR)/mem_buff_demo.o
-
-LIBS		=	-L$(LIB_TEST_TARGET_DIR) -lsnapshot_parser \
-				-L$(LIB_TARGET_DIR) -l$(LIB_BASE_NAME)
-
-all: copy_libs
-
-test_app: $(BIN_TEST_TARGET_DIR)/$(PROG)
+echo "Running trc_pkt_lister on single snapshot ${TEST}"
 
 
- $(BIN_TEST_TARGET_DIR)/$(PROG): $(OBJECTS) | build_dir
-			mkdir -p  $(BIN_TEST_TARGET_DIR)
-			$(LINKER) $(LDFLAGS) $(OBJECTS) -Wl,--start-group $(LIBS) -Wl,--end-group -o $(BIN_TEST_TARGET_DIR)/$(PROG)
+if [ "${BIN_DIR}" != "" ]; then
+    echo "Tests using BIN_DIR = ${BIN_DIR}"
+    export LD_LIBRARY_PATH=${BIN_DIR}.
+    echo "LD_LIBRARY_PATH set to ${BIN_DIR}"
+else
+    echo "Tests using installed binaries"
+fi
 
-build_dir:
-	mkdir -p $(BUILD_DIR)
-
-.PHONY: copy_libs
-copy_libs: $(BIN_TEST_TARGET_DIR)/$(PROG)
-	cp $(LIB_TARGET_DIR)/*.so* $(BIN_TEST_TARGET_DIR)/.
+# === test the decode set ===
+${BIN_DIR}trc_pkt_lister -ss_dir "${SNAPSHOT_DIR}/${TEST}" -decode -logfilename "${OUT_DIR}/${TEST}.ppl"
+echo "Done : Return $?"
 
 
-
-#### build rules
-## object dependencies
-DEPS := $(OBJECTS:%.o=%.d)
-
--include $(DEPS)
-
-## object compile
-$(BUILD_DIR)/%.o : %.cpp | build_dir
-			$(CXX) $(CXXFLAGS) $(CXX_INCLUDES) -MMD $< -o $@
-
-#### clean
-.PHONY: clean
-clean :
-	-rm $(BIN_TEST_TARGET_DIR)/$(PROG) $(OBJECTS)
-	-rm $(DEPS)
-	-rm $(BIN_TEST_TARGET_DIR)/*.so*
-	-rmdir $(BUILD_DIR)
-
-# end of file makefile
