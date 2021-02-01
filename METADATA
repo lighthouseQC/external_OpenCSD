@@ -9,11 +9,11 @@ third_party {
     type: GIT
     value: "https://github.com/Linaro/OpenCSD.git"
   }
-  version: "v0.14.3"
+  version: "v0.14.4"
   license_type: RESTRICTED
   last_upgrade_date {
     year: 2020
-    month: 8
-    day: 28
+    month: 11
+    day: 18
   }
 }
