@@ -84,7 +84,9 @@ typedef struct _ocsd_generic_trace_elem {
         ocsd_swt_info_t sw_trace_info;      /* software trace packet info    */
 		uint32_t num_instr_range;	        /* number of instructions covered by range packet (for T32 this cannot be calculated from en-st/i_size) */
         unsync_info_t unsync_eot_info;      /* additional information for unsync / end-of-trace packets. */
-    };
+		trace_marker_payload_t sync_marker; /* marker element - sync later element to position in stream */
+        trace_memtrans_t mem_trans;         /* memory transaction packet - transaction event */
+	};
 
     const void *ptr_extended_data;        /* pointer to extended data buffer (data trace, sw trace payload) / custom structure */
 
@@ -324,6 +326,44 @@ plus the packet type and size of any payload data.
 SW trace packets that have a payload will use the extended_data flag and pointer to deliver this data.
 
 SW trace packets that include timestamp information will us the `has_ts` flag and fill in the timestamp value.
+
+
+### OCSD_GEN_TRC_ELEM_SYNC_MARKER ###
+__packet fields valid__: `sync_marker`
+
+Synchronisation marker - marks position in stream of an element that is output later.
+e.g. a timestamp marker can be output to represent the correct position in the stream for a 
+timestamp packet the is output later.
+
+The `sync_marker` field has a structure as shown below.
+
+~~~{.c}
+typedef enum _trace_sync_marker_t {
+    ELEM_MARKER_TS,        /**< Marker for timestamp element */
+} trace_sync_marker_t;
+
+typedef struct _trace_marker_payload_t {
+    trace_sync_marker_t type;   /**< type of sync marker */
+    uint32_t value;             /**< sync marker value - usage depends on type */
+} trace_marker_payload_t;
+~~~
+
+### OCSD_GEN_TRC_ELEM_MEMTRANS ###
+__packet fields valid__: `mem_trans`
+
+Memory transaction elements may appear in the output stream, if they are not otherwise cancelled
+by speculative trace packets.
+
+The memory transaction field has values as defined in the enum below:-
+
+~~~{.c}
+typedef enum _memtrans_t {
+    OCSD_MEM_TRANS_TRACE_INIT,/* Trace started while PE in transactional state */
+    OCSD_MEM_TRANS_START,     /* Trace after this packet is part of a transactional memory sequence */
+    OCSD_MEM_TRANS_COMMIT,    /* Transactional memory sequence valid. */
+    OCSD_MEM_TRANS_FAIL,      /* Transactional memory sequence failed - operations since start of transaction have been unwound. */  
+} trace_memtrans_t;
+~~~
 
 
 ### OCSD_GEN_TRC_ELEM_CUSTOM ###
