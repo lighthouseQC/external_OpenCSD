@@ -81,4 +81,9 @@ cc_library_static {
         "decoder/source/ptm/*.cpp",
         "decoder/source/stm/*.cpp",
     ],
+
+    lto: {
+        never: true,
+    },
+
 }
